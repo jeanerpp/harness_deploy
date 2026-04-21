@@ -21,3 +21,8 @@ Setup Harness secrets
 The pipeline need to two credentials configured in project level secrets:
 1. `Github_PAT`: the personal access token for the github repo.
 2. `db_password`: the password for the AWS RDS database.
+
+Run deployment in Harness
+----
+Deployment can be done in Harness GUI, as shown below:
+<img width="1784" height="838" alt="image" src="https://github.com/user-attachments/assets/f85dd29b-0670-4d27-a49e-17bdd5dfb44a" />
