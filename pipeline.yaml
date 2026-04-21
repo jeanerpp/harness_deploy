@@ -1,0 +1,120 @@
+pipeline:
+  name: aws_deploy
+  identifier: aws_deploy
+  projectIdentifier: testdemo
+  orgIdentifier: default
+  description: deploy aws infra and service
+  tags: {}
+  stages:
+    - stage:
+        name: deploy_infra
+        identifier: deploy_infra
+        description: AWS infra deployment
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: ShellScriptProvision
+                  name: terraform validate
+                  identifier: checkout_terraform
+                  spec:
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          export TF_VAR_db_password=<+secrets.getValue("db_password")>
+
+                          cd $WORKING_DIR
+                          rm -rf quiz_tf
+                          git clone https://<+secrets.getValue("Github_PAT")>@github.com/jeanerpp/quiz_tf.git
+                          cd quiz_tf && git pull origin -f
+                          cd envs/test && terraform init \
+                            -backend-config="region=$tf_region" \
+                            -backend-config="bucket=$tf_bucket" && \
+                          terraform validate
+                    environmentVariables:
+                      - name: tf_region
+                        type: String
+                        value: ap-northeast-1
+                      - name: tf_bucket
+                        type: String
+                        value: tf-s3-bucket-702536396247-ap-northeast-1-an
+                  timeout: 10m
+              - step:
+                  type: ShellScript
+                  name: secure scan
+                  identifier: secure_scan
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          cd $WORKING_DIR
+                          cd quiz_tf && gitleaks detect --source . --verbose --no-git
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 1m
+              - step:
+                  type: ShellScript
+                  name: terraform plan
+                  identifier: terraform_plan
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          export TF_VAR_db_password=<+secrets.getValue("db_password")>
+
+                          cd $WORKING_DIR
+                          cd quiz_tf/envs/test && terraform plan
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+              - step:
+                  type: HarnessApproval
+                  name: Need Approval
+                  identifier: Need_Approval
+                  spec:
+                    approvalMessage: Please review the following information and approve the pipeline progression
+                    includePipelineExecutionHistory: true
+                    isAutoRejectEnabled: false
+                    approvers:
+                      userGroups:
+                        - account._account_all_users
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                    approverInputs: []
+                  timeout: 5m
+              - step:
+                  type: ShellScript
+                  name: terraform apply
+                  identifier: terraform_apply
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          export TF_VAR_db_password=<+secrets.getValue("db_password")>
+
+                          cd $WORKING_DIR
+                          cd quiz_tf/envs/test && terraform apply -auto-approve
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 30m
+        tags: {}
+  delegateSelectors:
+    - docker-delegate1
+  properties:
+    ci:
+      codebase:
+        connectorRef: demo
+        repoName: quiz_tf
+        build: <+input>
+        sparseCheckout: []
