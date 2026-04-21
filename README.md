@@ -1,4 +1,11 @@
 This is Harness pipeline file to deploy the infra for the project https://github.com/jeanerpp/quiz_tf.
+It has one stage and multiple steps:
+- deploy infra
+  - terraform validate: setup and validate the terraform code
+  - secure scan: scan the terraform code for security issues
+  - terraform plan: plan the deployment
+  - Need Approval: wait for approval
+  - terraform apply: deploy the infra
 
 How to setup delegate
 ----
