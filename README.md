@@ -23,11 +23,16 @@ docker run -d --cpus=1 --memory=2g \
   -e MANAGER_HOST_AND_PORT=https://app.harness.io harness-delegate-quiz:latest
 ```
 
-Setup Harness secrets
+Setup Harness variables and secrets
 ----
+The pipeline "terraform validate" step need to have the following variables configured:
+- `tf_region`: the AWS region
+- `tf_bucket`: the S3 bucket name
+They are needed to setup the terraform backend.
+
 The pipeline need to two credentials configured in project level secrets:
-1. `Github_PAT`: the personal access token for the github repo.
-2. `db_password`: the password for the AWS RDS database.
+- `Github_PAT`: the personal access token for the github repo.
+- `db_password`: the password for the AWS RDS database.
 
 Run deployment in Harness
 ----
