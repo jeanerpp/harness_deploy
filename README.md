@@ -1,0 +1,23 @@
+This is Harness pipeline file to deploy the infra for the project https://github.com/jeanerpp/quiz_tf.
+
+How to setup delegate
+----
+1. setup a AWS EC2 accotiated with a role which able to do the deployment in AWS.
+2. build a custom docker image with the following command: `docker build -t quiz_tf_infra .`, as the harness docker image does not have terraform and git installed.
+3. start the delegate according the harness guideline, it should look like this:
+```
+docker run -d --cpus=1 --memory=2g \
+  -e DELEGATE_NAME=docker-delegate1 \
+  -e NEXT_GEN="true" \
+  -e DELEGATE_TYPE="DOCKER" \
+  -e ACCOUNT_ID=<harness account id> \
+  -e DELEGATE_TOKEN=<harness delegate token>= \
+  -e DELEGATE_TAGS="" \
+  -e MANAGER_HOST_AND_PORT=https://app.harness.io harness-delegate-quiz:latest
+```
+
+Setup Harness secrets
+----
+The pipeline need to two credentials configured in project level secrets:
+1. `Github_PAT`: the personal access token for the github repo.
+2. `db_password`: the password for the AWS RDS database.
