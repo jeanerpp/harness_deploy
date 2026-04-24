@@ -1,4 +1,7 @@
-This is Harness pipeline file to deploy the infra for the project https://github.com/jeanerpp/quiz_tf.
+pipeline.infra.yaml is Harness pipeline file to deploy the infra for the project https://github.com/jeanerpp/quiz_tf.
+pipeline.app.yaml is Harness pipeline file to deploy the app for the project https://github.com/jeanerpp/quiz_app.
+After the deployment, the URL will display a increasing by 1 count value: http://app-alb-1183314719.ap-northeast-1.elb.amazonaws.com/count 
+
 It has one stage and multiple steps:
 - deploy infra
   - terraform validate: setup and validate the terraform code
