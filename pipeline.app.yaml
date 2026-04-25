@@ -1,0 +1,92 @@
+pipeline:
+  name: app_deploy
+  identifier: app_deploy
+  projectIdentifier: testdemo
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: deploy app
+        identifier: deploy_app
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: ShellScript
+                  name: check code
+                  identifier: check_code
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          cd $WORKING_DIR
+                          rm -rf quiz_app
+
+                          git clone https://<+secrets.getValue("Github_PAT")>@github.com/jeanerpp/quiz_app.git
+                          cd quiz_app && git pull origin -f
+
+                          python -m venv venv
+                          . venv/bin/activate
+                          python -m pip install pip build --upgrade
+                          python -m pip install -e ".[test]"
+                          python -m pytest && python -m build
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+              - step:
+                  type: ShellScript
+                  name: install app
+                  identifier: install_app
+                  spec:
+                    shell: Bash
+                    executionTarget: {}
+                    source:
+                      type: Inline
+                      spec:
+                        script: |-
+                          db_addr=$(aws rds describe-db-instances \
+                              --db-instance-identifier app-db \
+                              --query 'DBInstances[0].Endpoint.Address' \
+                              --output text)
+
+                          db_port=$(aws rds describe-db-instances \
+                              --db-instance-identifier app-db \
+                              --query 'DBInstances[0].Endpoint.Port' \
+                              --output text)
+
+                          db_password=<+secrets.getValue("db_password")>
+
+                          cd $WORKING_DIR/quiz_app/dist
+                          aws s3 cp aws_demo-0.1.0.tar.gz s3://tf-s3-bucket-702536396247-ap-northeast-1-an/artifacts/
+
+                          for ip in $(aws ec2 describe-instances   --filters "Name=tag:aws:autoscaling:groupName,Values=app-asg" --query "Reservations[*].Instances[*].PrivateIpAddress" --output text);do
+                          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ../../bastion.pem ubuntu@$ip << EOF
+                          python3 -m venv app
+                          cd app
+                          aws s3 cp s3://tf-s3-bucket-702536396247-ap-northeast-1-an/artifacts/aws_demo-0.1.0.tar.gz ./
+                          . bin/activate
+
+                          export RDS_HOSTNAME=$db_addr
+                          export RDS_PORT=$db_port
+                          export RDS_PASSWORD=$db_password
+                          export RDS_USERNAME=admin
+                          export RDS_DB_NAME=quiz
+
+                          pip install aws_demo-0.1.0.tar.gz
+                          aws-demo-manage migrate
+
+                          pkill python
+                          nohup aws-demo-manage runserver 0.0.0.0:8000 >> server.log 2>&1 &
+
+                          EOF
+
+                          done
+                    environmentVariables: []
+                    outputVariables: []
+                  timeout: 10m
+        tags: {}
