@@ -14,4 +14,19 @@ RUN curl -XGET -L https://github.com/gitleaks/gitleaks/releases/download/v8.30.1
     mv gitleaks /usr/local/bin/ && \
     rm gitleaks_8.30.1_linux_x64.tar.gz
 
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf awscliv2.zip aws
+
+RUN microdnf install -y --nodocs python3.12 python3.12-pip \
+    && python3.12 -m pip install --no-cache-dir --upgrade virtualenv pip \
+    && microdnf clean all \
+    && rm -rf /var/cache/yum
+
+RUN ln -sf /usr/bin/python3.12 /usr/bin/python \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python3 \
+    && ln -sf /usr/bin/pip3.12 /usr/bin/pip \
+    && ln -sf /usr/bin/pip3.12 /usr/bin/pip3
+
 USER harness
