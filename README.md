@@ -41,3 +41,5 @@ Run deployment in Harness
 ----
 Deployment can be done in Harness GUI, as shown below:
 <img width="1784" height="838" alt="image" src="https://github.com/user-attachments/assets/f85dd29b-0670-4d27-a49e-17bdd5dfb44a" />
+<img width="1878" height="653" alt="image" src="https://github.com/user-attachments/assets/2980c50e-fb60-4df7-b12c-c33f8a184214" />
+
