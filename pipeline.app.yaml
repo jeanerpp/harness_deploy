@@ -34,7 +34,7 @@ pipeline:
                           . venv/bin/activate
                           python -m pip install pip build --upgrade
                           python -m pip install -e ".[test]"
-                          python -m pytest && python -m build
+                          python -m pytest && gitleaks detect --source . --verbose --no-git && python -m build
                     environmentVariables: []
                     outputVariables: []
                   timeout: 10m
